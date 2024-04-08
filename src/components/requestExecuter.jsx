@@ -34,6 +34,7 @@ const RequestExecuter = ({ transactionId, handleBack }) => {
   const [showAddRequestButton, setShowAddRequestButton] = useState(false);
   const [currentConfig, setCurrentConfig] = useState("");
   const [showError, setShowError] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const requestCount = useRef(0);
   const {
     handleSubmit,
@@ -167,6 +168,7 @@ const RequestExecuter = ({ transactionId, handleBack }) => {
   };
 
   const sendRequest = async (e, call) => {
+    setIsLoading(true);
     setShowAddRequestButton(false);
 
     const data = {};
@@ -203,6 +205,8 @@ const RequestExecuter = ({ transactionId, handleBack }) => {
     } catch (e) {
       console.log("Error while fetching session data", e);
       toast.error(JSON.stringify(e?.response));
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -322,7 +326,7 @@ const RequestExecuter = ({ transactionId, handleBack }) => {
                 >
                   Copy Beckn Payload
                 </SendButton> */}
-                <SendButton disabled={call.executed} type="submit">
+                <SendButton disabled={call.executed || isLoading} type="submit">
                   {call.type === "form" ? "Continue" : "Send"}
                 </SendButton>
               </ButtonContainer>
