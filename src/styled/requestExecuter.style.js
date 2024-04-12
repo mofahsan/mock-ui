@@ -162,3 +162,12 @@ export const IconsContainer = styled.div`
     transform: rotate(${({ rotation }) => rotation}deg);
   }
 `;
+
+export const ResetContainer = styled.div`
+  display: flex;
+  padding: 5px;
+  gap: 5px;
+  background-color: #efefef;
+  border-radius: 5px;
+  cursor: pointer;
+`;

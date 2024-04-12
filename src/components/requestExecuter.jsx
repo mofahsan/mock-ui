@@ -19,6 +19,7 @@ import {
   OnPayloadContainer,
   IconsContainer,
   TitleInfo,
+  ResetContainer,
 } from "../styled/requestExecuter.style";
 import RenderInput from "./renderInput";
 import { useEffect } from "react";
@@ -275,7 +276,11 @@ const RequestExecuter = ({ transactionId, handleBack }) => {
           <HeadingWrapper>{call.config}</HeadingWrapper>
           <IconsContainer rotation={call.isCollapsed ? 270 : 90}>
             {!call.type.startsWith("on_") && (
-              <ReplayIcon onClick={() => replayTranscation(call.type)} />
+              <ResetContainer>
+                <div>Reset</div>
+
+                <ReplayIcon onClick={() => replayTranscation(call.type)} />
+              </ResetContainer>
             )}
             <img
               onClick={() => toggleCollapse(call)}
