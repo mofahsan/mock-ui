@@ -43,7 +43,7 @@ const SessionForm = ({ updateStep }) => {
       setFlows(res.data.data);
     } catch (e) {
       console.log("Error while fetching flows data", e);
-      toast.error(JSON.stringify(e?.response?.data));
+      toast.error(JSON.stringify(e?.response?.data || e?.message));
     }
   };
 
@@ -61,7 +61,7 @@ const SessionForm = ({ updateStep }) => {
       setTransactions(res.data);
     } catch (e) {
       console.log("Error while fetching session data", e);
-      toast.error(JSON.stringify(e?.response?.data));
+      toast.error(JSON.stringify(e?.response?.data || e?.message));
     }
   };
 
@@ -86,7 +86,7 @@ const SessionForm = ({ updateStep }) => {
       updateStep(2, transactiomId);
     } catch (e) {
       console.log("error while sending session request", e);
-      toast.error(JSON.stringify(e?.response?.data));
+      toast.error(JSON.stringify(e?.response?.data || e?.message));
     }
   };
 

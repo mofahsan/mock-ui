@@ -100,7 +100,7 @@ const RequestExecuter = ({ transactionId, handleBack }) => {
       setProtocolCalls(res.data.session.protocolCalls);
     } catch (e) {
       console.log("Error while fetching session data", e);
-      toast.error(JSON.stringify(e?.response));
+      toast.error(JSON.stringify(e?.message || "Something went wrong"));
     }
   };
 
@@ -125,7 +125,7 @@ const RequestExecuter = ({ transactionId, handleBack }) => {
       setProtocolCalls(res.data.protocolCalls);
     } catch (e) {
       console.log("Error while fetching session data", e);
-      toast.error(JSON.stringify(e?.response));
+      toast.error(JSON.stringify(e?.message || "Something went wrong"));
     }
   };
 
@@ -205,7 +205,7 @@ const RequestExecuter = ({ transactionId, handleBack }) => {
       setProtocolCalls(res.data.session.protocolCalls);
     } catch (e) {
       console.log("Error while fetching session data", e);
-      toast.error(JSON.stringify(e?.response));
+      toast.error(JSON.stringify(e?.message || "Something went wrong"));
     } finally {
       setIsLoading(false);
     }
@@ -233,7 +233,7 @@ const RequestExecuter = ({ transactionId, handleBack }) => {
       setProtocolCalls(res.data.session.protocolCalls);
     } catch (e) {
       console.log("Error while calling mapper.repeat", e);
-      toast.error(JSON.stringify(e.response.data));
+      toast.error(JSON.stringify(e?.message || "Something went wrong"));
     }
   };
 
@@ -260,7 +260,7 @@ const RequestExecuter = ({ transactionId, handleBack }) => {
       setInputFieldsData(res.data.session.input);
     } catch (e) {
       console.log("Error while calling mapper.repeat", e);
-      toast.error(JSON.stringify(e.response.data));
+      toast.error(JSON.stringify(e?.message || "Something went wrong"));
     }
   };
 
