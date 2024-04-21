@@ -54,7 +54,6 @@ const RequestExecuter = ({ transactionId, handleBack }) => {
     Object.entries(protocolCalls).map((data) => {
       const [, call] = data;
       if (call.shouldRender === true && call.executed === false) {
-        console.log("Cuurent comnfig", call.config);
         setCurrentConfig(call.config);
       }
       if (firstPayload || stopMapper) return null;
@@ -211,7 +210,7 @@ const RequestExecuter = ({ transactionId, handleBack }) => {
     }
   };
 
-  const replayTranscation = async (type) => {
+  const replayTranscation = async (config) => {
     setShowAddRequestButton(false);
 
     try {
@@ -225,7 +224,7 @@ const RequestExecuter = ({ transactionId, handleBack }) => {
         `${env.sandBox}/mapper/repeat`,
         JSON.stringify({
           transactionId: transactionId,
-          callType: type,
+          config: config,
         }),
         header
       );
@@ -276,10 +275,9 @@ const RequestExecuter = ({ transactionId, handleBack }) => {
           <HeadingWrapper>{call.config}</HeadingWrapper>
           <IconsContainer rotation={call.isCollapsed ? 270 : 90}>
             {!call.type.startsWith("on_") && (
-              <ResetContainer>
+              <ResetContainer onClick={() => replayTranscation(call.config)}>
                 <div>Reset</div>
-
-                <ReplayIcon onClick={() => replayTranscation(call.type)} />
+                <ReplayIcon />
               </ResetContainer>
             )}
             <img

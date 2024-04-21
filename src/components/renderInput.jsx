@@ -89,7 +89,6 @@ const RenderInput = ({ data, control, errors, watch }) => {
       if (data.type === "select") {
         setSelectOptions(filteredOptions);
       } else if (data.type === "form") {
-        console.log("filterd Options", filteredOptions);
         setUrl(filteredOptions?.[0]?.value);
       }
     } catch (e) {
