@@ -27,7 +27,7 @@ import MakeSlopeChart from "./d3-visualization/MakeMarkovChart";
 import ReplayIcon from "@mui/icons-material/Replay";
 import Collapse from "@mui/material/Collapse";
 
-const RequestExecuter = ({ transactionId, handleBack }) => {
+const RequestExecuterV2 = ({ transactionId, handleBack }) => {
   const [protocolCalls, setProtocolCalls] = useState({});
   const [inputFieldsData, setInputFieldsData] = useState({});
   const [session, setSession] = useState(null);
@@ -42,7 +42,6 @@ const RequestExecuter = ({ transactionId, handleBack }) => {
     control,
     formState: { errors },
     watch,
-    setValue,
   } = useForm();
 
   useEffect(() => {
@@ -316,7 +315,6 @@ const RequestExecuter = ({ transactionId, handleBack }) => {
                   control={control}
                   errors={errors}
                   watch={watch}
-                  setValue={setValue}
                 />
               ))}
               <ButtonContainer>
@@ -404,4 +402,4 @@ const RequestExecuter = ({ transactionId, handleBack }) => {
   );
 };
 
-export default RequestExecuter;
+export default RequestExecuterV2;

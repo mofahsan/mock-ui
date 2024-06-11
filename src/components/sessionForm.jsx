@@ -23,6 +23,7 @@ const SessionForm = ({ updateStep }) => {
     country: "IND",
     cityCode: "",
     configName: "",
+    bpp_id: "",
   });
   useEffect(() => {
     getSessions();
@@ -138,6 +139,17 @@ const SessionForm = ({ updateStep }) => {
                 id="cityCode"
                 name="cityCode"
                 value={formData.cityCode}
+                onChange={handleInputChange}
+              />
+            </FormField>
+
+            <FormField>
+              <Label htmlFor="bpp_id">Seller Subscriber Id:</Label>
+              <Input
+                type="text"
+                id="bpp_id"
+                name="bpp_id"
+                value={formData.bpp_id}
                 onChange={handleInputChange}
               />
             </FormField>

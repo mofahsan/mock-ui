@@ -13,10 +13,12 @@ import { useEffect, useRef } from "react";
 import { useState } from "react";
 
 const exeptions = ["startStop", "endStop"];
-const RenderInput = ({ data, control, errors, watch }) => {
+const RenderInput = ({ data, control, errors, watch, setValue }) => {
   const [selectOptions, setSelectOptions] = useState();
   const [url, setUrl] = useState("");
   const [formData, setFormData] = useState(watch());
+  const [selectDefaultValue, setSelectDefaultValue] = useState("");
+  const [isFetched, setIsFetched] = useState(false);
   // const fetched = useRef([]);
   useEffect(() => {
     getOptions();
@@ -39,6 +41,10 @@ const RenderInput = ({ data, control, errors, watch }) => {
   };
 
   const getOptions = async () => {
+    if (isFetched) {
+      return;
+    }
+
     if (data.type !== "select" && data.type !== "form") {
       return;
     }
@@ -86,10 +92,29 @@ const RenderInput = ({ data, control, errors, watch }) => {
         (obj, index, self) => index === self.findIndex((t) => t.key === obj.key)
       );
 
+      setIsFetched(true);
+
       if (data.type === "select") {
+        if (filteredOptions.length === 1) {
+          setSelectDefaultValue(filteredOptions[0].key);
+          setValue(data.key, filteredOptions[0].key);
+        }
         setSelectOptions(filteredOptions);
       } else if (data.type === "form") {
         setUrl(filteredOptions?.[0]?.value);
+
+        const submissionIdResponse = await axios.post(
+          filteredOptions?.[0]?.value,
+          {}
+        );
+        setValue(
+          data.submissionIdFieldKey,
+          submissionIdResponse.data.submission_id
+        );
+        console.log(
+          "SubmissionIdResponse",
+          submissionIdResponse.data.submission_id
+        );
       }
     } catch (e) {
       console.log("Error while fetching option", e);
@@ -97,7 +122,7 @@ const RenderInput = ({ data, control, errors, watch }) => {
     }
   };
 
-  // console.log("data", data);
+  // console.log("data", data.key);
   // console.log("sleectOPts", selectOptions);
   // console.log("formaDat", formData);
 
