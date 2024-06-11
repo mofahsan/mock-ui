@@ -82,34 +82,35 @@ const RequestExecuter = ({ transactionId, handleBack }) => {
     });
   }, [protocolCalls]);
 
-  useEffect(() => {
-    const checkFormFields = (config) => {
-      const inputFields = inputFieldsData[config];
-      const call = protocolCalls[config];
-      if (!inputFields) return false;
-      for (let item of inputFields) {
-        console.log(item.key, getValues(item.key));
-        console.log(getValues());
-        if (item.type === "form") {
-          continue;
-        }
-        if (
-          item.defaultValue ||
-          call?.businessPayload?.[item.key] ||
-          getValues(item.key)
-        ) {
-          continue;
-        }
-        return false;
-      }
-      return true;
-    };
-    const allFieldsFilled = checkFormFields(currentConfig);
-    console.log("allFieldsFilled", allFieldsFilled);
-    if (allFieldsFilled && !showError) {
-      sendRequest(watch(), protocolCalls[currentConfig]);
-    }
-  }, [currentConfig, setValue]);
+  // auto continue form
+  // useEffect(() => {
+  //   const checkFormFields = (config) => {
+  //     const inputFields = inputFieldsData[config];
+  //     const call = protocolCalls[config];
+  //     if (!inputFields) return false;
+  //     for (let item of inputFields) {
+  //       console.log(item.key, getValues(item.key));
+  //       console.log(getValues());
+  //       if (item.type === "form") {
+  //         continue;
+  //       }
+  //       if (
+  //         item.defaultValue ||
+  //         call?.businessPayload?.[item.key] ||
+  //         getValues(item.key)
+  //       ) {
+  //         continue;
+  //       }
+  //       return false;
+  //     }
+  //     return true;
+  //   };
+  //   const allFieldsFilled = checkFormFields(currentConfig);
+  //   console.log("allFieldsFilled", allFieldsFilled);
+  //   if (allFieldsFilled && !showError) {
+  //     sendRequest(watch(), protocolCalls[currentConfig]);
+  //   }
+  // }, [currentConfig, setValue]);
 
   const sessionTimeout = async (config) => {
     setShowAddRequestButton(false);
@@ -369,6 +370,7 @@ const RequestExecuter = ({ transactionId, handleBack }) => {
             </FormContainer>
           )}
         </CardBody>
+
         {/* {call.nextRequest === null &&
       additionalFlows &&
       call.becknPayload && (
@@ -435,5 +437,7 @@ const RequestExecuter = ({ transactionId, handleBack }) => {
     </Wrapper>
   );
 };
+
+// function GetCollapsedState(call) {}
 
 export default RequestExecuter;
