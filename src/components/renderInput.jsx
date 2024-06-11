@@ -20,6 +20,8 @@ const RenderInput = ({ data, control, errors, watch, setValue }) => {
   const [selectDefaultValue, setSelectDefaultValue] = useState("");
   const [isFetched, setIsFetched] = useState(false);
   // const fetched = useRef([]);
+
+  // there is only one form in the ui
   useEffect(() => {
     getOptions();
   }, [data, formData]);
@@ -93,11 +95,11 @@ const RenderInput = ({ data, control, errors, watch, setValue }) => {
       );
 
       setIsFetched(true);
-
       if (data.type === "select") {
         if (filteredOptions.length === 1) {
           setSelectDefaultValue(filteredOptions[0].key);
           setValue(data.key, filteredOptions[0].key);
+          // default value for select
         }
         setSelectOptions(filteredOptions);
       } else if (data.type === "form") {
@@ -123,6 +125,9 @@ const RenderInput = ({ data, control, errors, watch, setValue }) => {
   // console.log("formaDat", formData);
 
   if (data.type === "text") {
+    if (!data.defaultValue) {
+      // setFilledInputs(false);
+    }
     return (
       <FormFieldWrapper>
         <LabelContainer isRequired={data.required}>

@@ -43,6 +43,8 @@ const RequestExecuter = ({ transactionId, handleBack }) => {
     formState: { errors },
     watch,
     setValue,
+    getValues,
+    trigger,
   } = useForm();
 
   useEffect(() => {
@@ -79,6 +81,35 @@ const RequestExecuter = ({ transactionId, handleBack }) => {
       return null;
     });
   }, [protocolCalls]);
+
+  useEffect(() => {
+    const checkFormFields = (config) => {
+      const inputFields = inputFieldsData[config];
+      const call = protocolCalls[config];
+      if (!inputFields) return false;
+      for (let item of inputFields) {
+        console.log(item.key, getValues(item.key));
+        console.log(getValues());
+        if (item.type === "form") {
+          continue;
+        }
+        if (
+          item.defaultValue ||
+          call?.businessPayload?.[item.key] ||
+          getValues(item.key)
+        ) {
+          continue;
+        }
+        return false;
+      }
+      return true;
+    };
+    const allFieldsFilled = checkFormFields(currentConfig);
+    console.log("allFieldsFilled", allFieldsFilled);
+    if (allFieldsFilled && !showError) {
+      sendRequest(watch(), protocolCalls[currentConfig]);
+    }
+  }, [currentConfig, setValue]);
 
   const sessionTimeout = async (config) => {
     setShowAddRequestButton(false);
@@ -213,7 +244,7 @@ const RequestExecuter = ({ transactionId, handleBack }) => {
 
   const replayTranscation = async (config) => {
     setShowAddRequestButton(false);
-
+    setShowError(false);
     try {
       const header = {};
       header.headers = {
@@ -384,7 +415,7 @@ const RequestExecuter = ({ transactionId, handleBack }) => {
         </TitleInfo>
       </TitleContainer>
 
-      {Object.entries(protocolCalls).flatMap((data) => {
+      {Object.entries(protocolCalls).flatMap((data, index) => {
         const [key, call] = data;
 
         if (call.shouldRender && call.unsolicited) {
@@ -397,6 +428,7 @@ const RequestExecuter = ({ transactionId, handleBack }) => {
         if (call.shouldRender) {
           return renderRequestContainer(call);
         }
+        return <></>;
       })}
 
       {showAddRequestButton && <>Add Request</>}

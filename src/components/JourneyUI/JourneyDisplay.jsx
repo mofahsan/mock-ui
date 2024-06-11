@@ -80,10 +80,12 @@ export default function HorizontalStepperWithError({
 }) {
   function GetCallSteps() {
     if (!protocolCalls) return null;
+    // console.log(protocolCalls);
     return Object.entries(protocolCalls)
       .filter((data) => {
         // console.log(data);
-        return !data[0].startsWith("on_");
+        console.log(data);
+        return !data[0].startsWith("on_") && data[1].type !== "form";
       })
       .map((data, i) => {
         const labelProps = {};
@@ -111,7 +113,28 @@ export default function HorizontalStepperWithError({
   }
   //   GetCurrentStep(protocolCalls);
   return (
-    <Box sx={{ width: "70%", marginTop: "10px" }}>
+    <Box
+      sx={{
+        width: "80%",
+        height: "50px",
+        marginTop: "5px",
+        overflowX: "auto",
+        overflowY: "hidden",
+        "&::-webkit-scrollbar": {
+          height: "7px",
+        },
+        "&::-webkit-scrollbar-track": {
+          background: "#f1f1f1",
+        },
+        "&::-webkit-scrollbar-thumb": {
+          background: "#888",
+          borderRadius: "10px",
+        },
+        "&::-webkit-scrollbar-thumb:hover": {
+          background: "#555",
+        },
+      }}
+    >
       <Stepper activeStep={GetCurrentStep(protocolCalls)}>
         {GetCallSteps()}
       </Stepper>
