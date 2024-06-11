@@ -103,18 +103,14 @@ const RenderInput = ({ data, control, errors, watch, setValue }) => {
       } else if (data.type === "form") {
         setUrl(filteredOptions?.[0]?.value);
 
-        const submissionIdResponse = await axios.post(
-          filteredOptions?.[0]?.value,
-          {}
+        const submissionId = await axios.post(
+          `${env.sandBox}/submissionId`,
+          JSON.stringify({
+            url: filteredOptions?.[0]?.value,
+          }),
+          header
         );
-        setValue(
-          data.submissionIdFieldKey,
-          submissionIdResponse.data.submission_id
-        );
-        console.log(
-          "SubmissionIdResponse",
-          submissionIdResponse.data.submission_id
-        );
+        setValue(data.submissionIdFieldKey, submissionId.data.id);
       }
     } catch (e) {
       console.log("Error while fetching option", e);
