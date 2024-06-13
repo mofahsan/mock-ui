@@ -4,6 +4,11 @@ import { toast } from "react-toastify";
 import { useForm } from "react-hook-form";
 import { env } from "../env/env";
 import BackIcon from "../assets/png/back.png";
+import Box from "@mui/material/Box";
+import Stepper from "@mui/material/Stepper";
+import Step from "@mui/material/Step";
+import StepLabel from "@mui/material/StepLabel";
+import CircularProgress from "@mui/material/CircularProgress";
 import {
   Container,
   HeadingWrapper,
@@ -20,12 +25,21 @@ import {
   IconsContainer,
   TitleInfo,
   ResetContainer,
+  InLineContainer,
+  CallContainer,
+  WaitingContainer,
+  Message,
+  StyledCircularProgress,
 } from "../styled/requestExecuter.style";
 import RenderInput from "./renderInput";
 import { useEffect } from "react";
 import MakeSlopeChart from "./d3-visualization/MakeMarkovChart";
 import ReplayIcon from "@mui/icons-material/Replay";
 import Collapse from "@mui/material/Collapse";
+import VerticalLinearStepper, {
+  QontoConnector,
+} from "./verticalProtocolsSteps";
+import { StepContent } from "@mui/material";
 
 const RequestExecuter = ({ transactionId, handleBack }) => {
   const [protocolCalls, setProtocolCalls] = useState({});
@@ -83,34 +97,42 @@ const RequestExecuter = ({ transactionId, handleBack }) => {
   }, [protocolCalls]);
 
   // auto continue form
-  // useEffect(() => {
-  //   const checkFormFields = (config) => {
-  //     const inputFields = inputFieldsData[config];
-  //     const call = protocolCalls[config];
-  //     if (!inputFields) return false;
-  //     for (let item of inputFields) {
-  //       console.log(item.key, getValues(item.key));
-  //       console.log(getValues());
-  //       if (item.type === "form") {
-  //         continue;
-  //       }
-  //       if (
-  //         item.defaultValue ||
-  //         call?.businessPayload?.[item.key] ||
-  //         getValues(item.key)
-  //       ) {
-  //         continue;
-  //       }
-  //       return false;
-  //     }
-  //     return true;
-  //   };
-  //   const allFieldsFilled = checkFormFields(currentConfig);
-  //   console.log("allFieldsFilled", allFieldsFilled);
-  //   if (allFieldsFilled && !showError) {
-  //     sendRequest(watch(), protocolCalls[currentConfig]);
-  //   }
-  // }, [currentConfig, setValue]);
+  useEffect(() => {
+    const checkFormFields = (config) => {
+      const inputFields = inputFieldsData[config];
+      const call = protocolCalls[config];
+      if (!inputFields) return false;
+      for (let item of inputFields) {
+        console.log(item.key, getValues(item.key));
+        console.log(getValues());
+        if (item.type === "form") {
+          continue;
+        }
+        if (
+          item.defaultValue ||
+          call?.businessPayload?.[item.key] ||
+          getValues(item.key)
+        ) {
+          continue;
+        }
+        return false;
+      }
+      return true;
+    };
+    const allFieldsFilled = checkFormFields(currentConfig);
+    console.log("allFieldsFilled", allFieldsFilled);
+    if (allFieldsFilled && !showError) {
+      // auto send next prequest
+      // sendRequest(watch(), protocolCalls[currentConfig]);
+      // toggleCollapse(protocolCalls[currentConfig]);
+    } else {
+      if (currentConfig) toggleCollapse(protocolCalls[currentConfig]);
+    }
+  }, [currentConfig, setValue]);
+
+  const handleSend = async () => {
+    await sendRequest(watch(), protocolCalls[currentConfig]);
+  };
 
   const sessionTimeout = async (config) => {
     setShowAddRequestButton(false);
@@ -298,59 +320,79 @@ const RequestExecuter = ({ transactionId, handleBack }) => {
 
   const getOnCallData = () => {
     if (showError) return <div>{`Error: RESPONSE TIMEOUT!`}</div>;
-    return <div>{`Waiting for response`}</div>;
+    return (
+      <WaitingContainer>
+        <Message>WAITING FOR RESPONSE</Message>
+        <CircularProgress />
+      </WaitingContainer>
+    );
   };
 
   const renderRequestContainer = (call) => {
     return (
-      <Container>
-        <CardHeader>
-          <HeadingWrapper>{call.config}</HeadingWrapper>
-          <IconsContainer rotation={call.isCollapsed ? 270 : 90}>
+      <Step key={call.config} connector={<QontoConnector />} active={true}>
+        <StepLabel>{call.config}</StepLabel>
+        <StepContent>
+          <CallContainer>
+            <CardHeader onClick={() => toggleCollapse(call)}>
+              <HeadingWrapper>{call.config}</HeadingWrapper>
+              <InLineContainer>
+                {!call.type.startsWith("on_") && (
+                  <ResetContainer
+                    onClick={() => replayTranscation(call.config)}
+                  >
+                    <div>Reset</div>
+                    <ReplayIcon />
+                  </ResetContainer>
+                )}
+                <ResetContainer>
+                  <IconsContainer rotation={call.isCollapsed ? 270 : 90}>
+                    <img
+                      src={BackIcon}
+                      alt="Description"
+                      width={15}
+                      height={15}
+                    />
+                  </IconsContainer>
+                </ResetContainer>
+              </InLineContainer>
+            </CardHeader>
+            <CardBody isCollapsed={call.isCollapsed}>
+              {call.type.startsWith("on_") ? (
+                <>
+                  {call.businessPayload
+                    ? displayOnCallData(call)
+                    : getOnCallData()}
+                </>
+              ) : (
+                <FormContainer
+                  onSubmit={handleSubmit((data) => {
+                    sendRequest(data, call);
+                  })}
+                >
+                  {inputFieldsData[call.config].map((item) => (
+                    <RenderInput
+                      data={{
+                        ...item,
+                        config: call.config,
+                        currentConfig: currentConfig,
+                        defaultValue:
+                          call?.businessPayload?.[item.key] ||
+                          item.defaultValue,
+                        businessPayload:
+                          protocolCalls[call.preRequest]?.businessPayload,
+                        session: session,
+                      }}
+                      control={control}
+                      errors={errors}
+                      watch={watch}
+                      setValue={setValue}
+                    />
+                  ))}
+                </FormContainer>
+              )}
+            </CardBody>
             {!call.type.startsWith("on_") && (
-              <ResetContainer onClick={() => replayTranscation(call.config)}>
-                <div>Reset</div>
-                <ReplayIcon />
-              </ResetContainer>
-            )}
-            <img
-              onClick={() => toggleCollapse(call)}
-              src={BackIcon}
-              alt="Description"
-              width={10}
-              height={10}
-            />
-          </IconsContainer>
-        </CardHeader>
-        <CardBody isCollapsed={call.isCollapsed}>
-          {call.type.startsWith("on_") ? (
-            <>
-              {call.businessPayload ? displayOnCallData(call) : getOnCallData()}
-            </>
-          ) : (
-            <FormContainer
-              onSubmit={handleSubmit((data) => {
-                sendRequest(data, call);
-              })}
-            >
-              {inputFieldsData[call.config].map((item) => (
-                <RenderInput
-                  data={{
-                    ...item,
-                    config: call.config,
-                    currentConfig: currentConfig,
-                    defaultValue:
-                      call?.businessPayload?.[item.key] || item.defaultValue,
-                    businessPayload:
-                      protocolCalls[call.preRequest]?.businessPayload,
-                    session: session,
-                  }}
-                  control={control}
-                  errors={errors}
-                  watch={watch}
-                  setValue={setValue}
-                />
-              ))}
               <ButtonContainer>
                 <SendButton
                   disabled={!call?.becknPayload || call.type === "form"}
@@ -363,23 +405,31 @@ const RequestExecuter = ({ transactionId, handleBack }) => {
                 >
                   Copy Beckn Payload
                 </SendButton>
-                <SendButton disabled={call.executed || isLoading} type="submit">
+                <SendButton
+                  disabled={call.executed || isLoading}
+                  type="submit"
+                  onClick={handleSend}
+                >
                   {call.type === "form" ? "Continue" : "Send"}
                 </SendButton>
               </ButtonContainer>
-            </FormContainer>
-          )}
-        </CardBody>
-
-        {/* {call.nextRequest === null &&
-      additionalFlows &&
-      call.becknPayload && (
-        <button onClick={addFlow}>add flow</button>
-      )} */}
-      </Container>
+            )}
+          </CallContainer>
+        </StepContent>
+      </Step>
     );
   };
-
+  let activeStep = 0;
+  const steps = Object.entries(protocolCalls).flatMap((data) => {
+    const [key, call] = data;
+    return { label: call.config };
+  });
+  const entries = Object.entries(protocolCalls);
+  for (let i = 0; i < steps.length; i++) {
+    if (entries[i][1].shouldRender) {
+      activeStep = i;
+    }
+  }
   return (
     <Wrapper>
       <TitleContainer>
@@ -395,45 +445,61 @@ const RequestExecuter = ({ transactionId, handleBack }) => {
         </TitleHeading>
         <TitleInfo>
           <div>
-            <small>Transaction ID :</small>
-            <p>{transactionId}</p>
+            <p>Transaction ID :</p>
+            <small>{transactionId}</small>
           </div>
           <div>
-            <small>Domain :</small>
-            <p>{session?.domain}</p>
+            <p>Domain :</p>
+            <small>{session?.domain}</small>
           </div>
           <div>
-            <small>Versoin :</small>
-            <p>{session?.version}</p>
+            <p>Versoin :</p>
+            <small>{session?.version}</small>
           </div>
           <div>
-            <small>Country :</small>
-            <p>{session?.cityCode}</p>
+            <p>Country :</p>
+            <small>{session?.cityCode}</small>
           </div>
           <div>
-            <small>City :</small>
-            <p>{session?.country}</p>
+            <p>City :</p>
+            <small>{session?.country}</small>
           </div>
         </TitleInfo>
       </TitleContainer>
 
-      {Object.entries(protocolCalls).flatMap((data, index) => {
-        const [key, call] = data;
+      <div style={{ display: "flex", alignItems: "flex-start" }}>
+        {/* <VerticalLinearStepper protocolCalls={protocolCalls} /> */}
+        <div style={{ width: "100%" }}>
+          <Box>
+            <Stepper
+              orientation="vertical"
+              activeStep={activeStep}
+              connector={<QontoConnector />}
+            >
+              {Object.entries(protocolCalls).flatMap((data, index) => {
+                const [key, call] = data;
 
-        if (call.shouldRender && call.unsolicited) {
-          return [
-            renderRequestContainer(call.unsolicited),
-            renderRequestContainer(call),
-          ];
-        }
+                if (call.shouldRender && call.unsolicited) {
+                  return [
+                    renderRequestContainer(call.unsolicited),
+                    renderRequestContainer(call),
+                  ];
+                }
 
-        if (call.shouldRender) {
-          return renderRequestContainer(call);
-        }
-        return <></>;
-      })}
-
-      {showAddRequestButton && <>Add Request</>}
+                if (call.shouldRender) {
+                  return renderRequestContainer(call);
+                }
+                return (
+                  <Step key={index}>
+                    <StepLabel>{call.config}</StepLabel>
+                  </Step>
+                );
+              })}
+            </Stepper>
+          </Box>
+          {showAddRequestButton && <>Add Request</>}
+        </div>
+      </div>
     </Wrapper>
   );
 };
