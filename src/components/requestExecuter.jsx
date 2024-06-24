@@ -119,26 +119,26 @@ const RequestExecuter = ({ transactionId, handleBack }) => {
   }, [protocolCalls]);
 
   // auto continue form
-  useEffect(() => {
-    const checkFormFields = (config) => {
-      const inputFields = inputFieldsData[config];
-      const call = protocolCalls[config];
-      if (!inputFields) return false;
-      for (let item of inputFields) {
-        if (item.type === "form") {
-          continue;
-        }
-        if (
-          item.defaultValue ||
-          call?.businessPayload?.[item.key] ||
-          getValues(item.key)
-        ) {
-          continue;
-        }
-        return false;
+  const checkFormFields = (config) => {
+    const inputFields = inputFieldsData[config];
+    const call = protocolCalls[config];
+    if (!inputFields) return false;
+    for (let item of inputFields) {
+      if (item.type === "form") {
+        continue;
       }
-      return true;
-    };
+      if (
+        item.defaultValue ||
+        call?.businessPayload?.[item.key] ||
+        getValues(item.key)
+      ) {
+        continue;
+      }
+      return false;
+    }
+    return true;
+  };
+  useEffect(() => {
     const allFieldsFilled = checkFormFields(currentConfig);
     // console.log("allFieldsFilled", allFieldsFilled);
     if (allFieldsFilled && !showError) {
@@ -445,7 +445,11 @@ const RequestExecuter = ({ transactionId, handleBack }) => {
                   Copy Beckn Payload
                 </SendButton>
                 <SendButton
-                  disabled={call.executed || isLoading}
+                  disabled={
+                    call.executed ||
+                    isLoading ||
+                    !checkFormFields(currentConfig)
+                  }
                   type="submit"
                   onClick={() => handleSend(call)}
                 >
