@@ -196,7 +196,6 @@ function Chart({ data, payloads, config }) {
 
 function GetLabel(title, sessionData) {
   if (title.startsWith("on_")) {
-    console.log(sessionData);
     if (sessionData[title].businessPayload.length > 1) {
       return title + `(${sessionData[title].businessPayload.length})`;
     }

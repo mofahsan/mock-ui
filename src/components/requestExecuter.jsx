@@ -29,7 +29,7 @@ import {
   CallContainer,
   WaitingContainer,
   Message,
-  StyledCircularProgress,
+  SecondaryTitleHeading,
 } from "../styled/requestExecuter.style";
 import RenderInput from "./renderInput";
 import { useEffect } from "react";
@@ -64,6 +64,28 @@ const RequestExecuter = ({ transactionId, handleBack }) => {
   useEffect(() => {
     getSession();
   }, [transactionId]);
+
+  useEffect(() => {
+    const eventSource = new EventSource(`${env.sandBox}/event/unsolicited`);
+
+    eventSource.onmessage = (event) => {
+      const data = JSON.parse(event.data);
+
+      setSession(data);
+      setAdditionalFlows(data.additioalFlows);
+      setInputFieldsData(data.input);
+      setProtocolCalls(data.protocolCalls);
+    };
+
+    eventSource.onerror = (error) => {
+      console.error("EventSource failed:", error);
+      eventSource.close();
+    };
+
+    return () => {
+      eventSource.close();
+    };
+  }, []);
 
   useEffect(() => {
     let firstPayload = false;
@@ -103,8 +125,6 @@ const RequestExecuter = ({ transactionId, handleBack }) => {
       const call = protocolCalls[config];
       if (!inputFields) return false;
       for (let item of inputFields) {
-        console.log(item.key, getValues(item.key));
-        console.log(getValues());
         if (item.type === "form") {
           continue;
         }
@@ -120,7 +140,7 @@ const RequestExecuter = ({ transactionId, handleBack }) => {
       return true;
     };
     const allFieldsFilled = checkFormFields(currentConfig);
-    console.log("allFieldsFilled", allFieldsFilled);
+    // console.log("allFieldsFilled", allFieldsFilled);
     if (allFieldsFilled && !showError) {
       // auto send next prequest
       // sendRequest(watch(), protocolCalls[currentConfig]);
@@ -130,8 +150,8 @@ const RequestExecuter = ({ transactionId, handleBack }) => {
     }
   }, [currentConfig, setValue]);
 
-  const handleSend = async () => {
-    await sendRequest(watch(), protocolCalls[currentConfig]);
+  const handleSend = async (call) => {
+    await sendRequest(watch(), call);
   };
 
   const sessionTimeout = async (config) => {
@@ -184,6 +204,15 @@ const RequestExecuter = ({ transactionId, handleBack }) => {
   };
 
   const toggleCollapse = (call) => {
+    // if (session.additionalFlowActive) {
+    //   setSession((preData) => {
+    //     preData.additionalFlowConfig.protocolCalls[call.config] = {
+    //       ...preData.additionalFlowConfig.protocolCalls[call.config],
+    //       isCollapsed: !call.isCollapsed,
+    //     };
+    //   });
+    // }
+
     setProtocolCalls((prevData) => {
       prevData[call.config] = {
         ...prevData[call.config],
@@ -225,6 +254,14 @@ const RequestExecuter = ({ transactionId, handleBack }) => {
   const sendRequest = async (e, call) => {
     setIsLoading(true);
     setShowAddRequestButton(false);
+
+    // console.log("e", e);
+    // console.log("call", call);
+
+    if (call.type === "form") {
+      const formUrl = getValues(call.formUrlKey);
+      window.open(formUrl, "_blank", "noreferrer");
+    }
 
     const data = {};
     Object.entries(e).map((item) => {
@@ -328,7 +365,7 @@ const RequestExecuter = ({ transactionId, handleBack }) => {
     );
   };
 
-  const renderRequestContainer = (call) => {
+  const renderRequestContainer = (call, inputField) => {
     return (
       <Step key={call.config} connector={<QontoConnector />} active={true}>
         <StepLabel>{call.config}</StepLabel>
@@ -370,7 +407,7 @@ const RequestExecuter = ({ transactionId, handleBack }) => {
                     sendRequest(data, call);
                   })}
                 >
-                  {inputFieldsData[call.config].map((item) => (
+                  {inputField[call.config].map((item) => (
                     <RenderInput
                       data={{
                         ...item,
@@ -380,6 +417,8 @@ const RequestExecuter = ({ transactionId, handleBack }) => {
                           call?.businessPayload?.[item.key] ||
                           item.defaultValue,
                         businessPayload:
+                          protocolCalls[call.config].unsolicited
+                            ?.businessPayload ||
                           protocolCalls[call.preRequest]?.businessPayload,
                         session: session,
                       }}
@@ -408,7 +447,7 @@ const RequestExecuter = ({ transactionId, handleBack }) => {
                 <SendButton
                   disabled={call.executed || isLoading}
                   type="submit"
-                  onClick={handleSend}
+                  onClick={() => handleSend(call)}
                 >
                   {call.type === "form" ? "Continue" : "Send"}
                 </SendButton>
@@ -428,6 +467,26 @@ const RequestExecuter = ({ transactionId, handleBack }) => {
   for (let i = 0; i < steps.length; i++) {
     if (entries[i][1].shouldRender) {
       activeStep = i;
+    }
+  }
+
+  let additionalFlowActiveStep = -1;
+  if (session?.additionalFlowConfig) {
+    const additionalFlowProtocolCalls =
+      session.additionalFlowConfig.protocolCalls;
+
+    const addFlowsteps = Object.entries(additionalFlowProtocolCalls).flatMap(
+      (data) => {
+        const [key, call] = data;
+        return { label: call.config };
+      }
+    );
+
+    const addFlowEntries = Object.entries(additionalFlowProtocolCalls);
+    for (let i = 0; i < addFlowsteps.length; i++) {
+      if (addFlowEntries[i][1].shouldRender) {
+        additionalFlowActiveStep = i;
+      }
     }
   }
   return (
@@ -479,15 +538,17 @@ const RequestExecuter = ({ transactionId, handleBack }) => {
               {Object.entries(protocolCalls).flatMap((data, index) => {
                 const [key, call] = data;
 
-                if (call.shouldRender && call.unsolicited) {
+                if (call.shouldRender && call.unsolicited?.length) {
                   return [
-                    renderRequestContainer(call.unsolicited),
-                    renderRequestContainer(call),
+                    call.unsolicited.map((unsCall) =>
+                      renderRequestContainer(unsCall, inputFieldsData)
+                    ),
+                    renderRequestContainer(call, inputFieldsData),
                   ];
                 }
 
                 if (call.shouldRender) {
-                  return renderRequestContainer(call);
+                  return renderRequestContainer(call, inputFieldsData);
                 }
                 return (
                   <Step key={index}>
@@ -497,6 +558,52 @@ const RequestExecuter = ({ transactionId, handleBack }) => {
               })}
             </Stepper>
           </Box>
+          {session?.additionalFlowConfig && (
+            <Box style={{ marginTop: "10px" }}>
+              <SecondaryTitleHeading>
+                <h2>{session.additionalFlowConfig.summary}</h2>
+              </SecondaryTitleHeading>
+
+              <Stepper
+                orientation="vertical"
+                activeStep={additionalFlowActiveStep}
+                connector={<QontoConnector />}
+              >
+                {Object.entries(
+                  session.additionalFlowConfig.protocolCalls
+                ).flatMap((data, index) => {
+                  const [key, call] = data;
+
+                  if (call.shouldRender && call.unsolicited?.length) {
+                    return [
+                      call.unsolicited.map((unsCall) =>
+                        renderRequestContainer(
+                          unsCall,
+                          session.additionalFlowConfig.input
+                        )
+                      ),
+                      renderRequestContainer(
+                        call,
+                        session.additionalFlowConfig.input
+                      ),
+                    ];
+                  }
+
+                  if (call.shouldRender) {
+                    return renderRequestContainer(
+                      call,
+                      session.additionalFlowConfig.input
+                    );
+                  }
+                  return (
+                    <Step key={index}>
+                      <StepLabel>{call.config}</StepLabel>
+                    </Step>
+                  );
+                })}
+              </Stepper>
+            </Box>
+          )}
           {showAddRequestButton && <>Add Request</>}
         </div>
       </div>

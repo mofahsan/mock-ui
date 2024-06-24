@@ -82,6 +82,23 @@ export const TitleHeading = styled.div`
   }
 `;
 
+export const SecondaryTitleHeading = styled.div`
+  display: flex;
+  align-items: center;
+  border: 1px solid #ccc;
+  border-radius: 10px;
+  padding: 15px;
+  gap: 15px;
+  background: linear-gradient(135deg, #eaeaea, #f0f0f0, #f9f9f9);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+
+  & > h2 {
+    padding: 0px;
+    margin: 0px;
+  }
+`;
+
 export const TitleInfo = styled.div`
   border: 1px solid #ccc;
   border-radius: 10px;

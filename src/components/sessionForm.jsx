@@ -19,11 +19,13 @@ import JourneyDialog from "./JourneyUI/JourneyPage";
 const SessionForm = ({ updateStep }) => {
   const [transcations, setTransactions] = useState([]);
   const [flows, setFlows] = useState([]);
+  const [additionalFlows, setAdditionalFlows] = useState([]);
   const [formData, setFormData] = useState({
     country: "IND",
     cityCode: "",
     configName: "",
     bpp_id: "",
+    additionalFlow: "",
   });
   useEffect(() => {
     getSessions();
@@ -40,7 +42,6 @@ const SessionForm = ({ updateStep }) => {
 
       const res = await axios.get(`${env.sandBox}/mapper/flows`, header);
 
-      console.log("response", res.data);
       setFlows(res.data.data);
     } catch (e) {
       console.log("Error while fetching flows data", e);
@@ -58,7 +59,6 @@ const SessionForm = ({ updateStep }) => {
 
       const res = await axios.get(`${env.sandBox}/cache`, header);
 
-      console.log("response", res.data);
       setTransactions(res.data);
     } catch (e) {
       console.log("Error while fetching session data", e);
@@ -91,8 +91,32 @@ const SessionForm = ({ updateStep }) => {
     }
   };
 
+  const getAdditionalFlows = async (configName) => {
+    try {
+      const header = {};
+      header.headers = {
+        ...header.headers,
+        "Content-Type": "application/json",
+      };
+
+      const response = await axios.get(
+        `${env.sandBox}/mapper/additionalFlows/${configName}`,
+        header
+      );
+
+      setAdditionalFlows(response.data.data);
+    } catch (e) {
+      console.log("error while fetching additional flows", e);
+      toast.error(JSON.stringify(e?.response?.data || e?.message));
+    }
+  };
+
   const handleInputChange = (e) => {
     const { name, value } = e.target;
+
+    if (name === "configName") {
+      getAdditionalFlows(value);
+    }
     setFormData((prevData) => ({
       ...prevData,
       [name]: value,
@@ -121,16 +145,23 @@ const SessionForm = ({ updateStep }) => {
               </Select>
             </FormField>
 
-            <FormField>
-              <Label htmlFor="country">Country:</Label>
-              <Input
-                type="text"
-                id="country"
-                name="country"
-                value={formData.country}
-                onChange={handleInputChange}
-              />
-            </FormField>
+            {additionalFlows.length ? (
+              <FormField>
+                <Label htmlFor="additionalFlows">Additional Flow:</Label>
+                <Select
+                  id="additionalFlows"
+                  name="additionalFlow"
+                  onChange={handleInputChange}
+                >
+                  <option selected="selected" disabled="disabled">
+                    select value
+                  </option>
+                  {additionalFlows.map((flow) => {
+                    return <option value={flow.value}>{flow.key}</option>;
+                  })}
+                </Select>
+              </FormField>
+            ) : null}
 
             <FormField>
               <Label htmlFor="cityCode">City Code:</Label>
@@ -150,6 +181,17 @@ const SessionForm = ({ updateStep }) => {
                 id="bpp_id"
                 name="bpp_id"
                 value={formData.bpp_id}
+                onChange={handleInputChange}
+              />
+            </FormField>
+
+            <FormField>
+              <Label htmlFor="country">Country:</Label>
+              <Input
+                type="text"
+                id="country"
+                name="country"
+                value={formData.country}
                 onChange={handleInputChange}
               />
             </FormField>

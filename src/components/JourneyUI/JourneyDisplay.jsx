@@ -54,7 +54,7 @@ export function JourneyDisplay({ selectedID }) {
     width: "100%",
     alignItems: "center",
   });
-  console.log(flowConfig);
+
   return (
     <LayoutRoot>
       <LayoutContainer>

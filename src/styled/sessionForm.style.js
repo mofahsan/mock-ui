@@ -11,6 +11,9 @@ export const FormContainer = styled.div`
   display: grid;
   grid-template-columns: repeat(2, 1fr);
   grid-gap: 20px;
+  max-height: 200px;
+  overflow-y: scroll;
+  margin-bottom: 10px;
 `;
 
 export const FormField = styled.div`

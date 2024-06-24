@@ -1,5 +1,5 @@
-import { Controller } from "react-hook-form";
 import axios from "axios";
+import { Controller } from "react-hook-form";
 import { toast } from "react-toastify";
 import { env } from "../env/env";
 import {
@@ -19,11 +19,13 @@ const RenderInput = ({ data, control, errors, watch, setValue }) => {
   const [formData, setFormData] = useState(watch());
   const [selectDefaultValue, setSelectDefaultValue] = useState("");
   const [isFetched, setIsFetched] = useState(false);
+  const [isSubmissionIdFetched, setIsSubmissionIdFetched] = useState(false);
   // const fetched = useRef([]);
 
   // there is only one form in the ui
   useEffect(() => {
     getOptions();
+    getSubmissionId();
   }, [data, formData]);
 
   useEffect(() => {
@@ -40,6 +42,17 @@ const RenderInput = ({ data, control, errors, watch, setValue }) => {
     } catch (error) {
       return false;
     }
+  };
+
+  const getSubmissionId = () => {
+    if (data.config !== data.currentConfig) {
+      return;
+    }
+
+    // if (data.key === "kycSubmissionId") {
+    //   setValue(data.key);
+    // }
+    // console.log("data", data);
   };
 
   const getOptions = async () => {
@@ -104,15 +117,19 @@ const RenderInput = ({ data, control, errors, watch, setValue }) => {
         setSelectOptions(filteredOptions);
       } else if (data.type === "form") {
         setUrl(filteredOptions?.[0]?.value);
+        setValue(data.key, filteredOptions?.[0]?.value);
 
-        const submissionId = await axios.post(
-          `${env.sandBox}/submissionId`,
-          JSON.stringify({
-            url: filteredOptions?.[0]?.value,
-          }),
-          header
-        );
-        setValue(data.submissionIdFieldKey, submissionId.data.id);
+        // const submissionId = await axios.post(
+        //   `${env.sandBox}/submissionId`,
+        //   JSON.stringify({
+        //     url: filteredOptions?.[0]?.value,
+        //   }),
+        //   header
+        // );
+        // if (!isSubmissionIdFetched) {
+        //   setValue(data.submissionIdFieldKey, submissionId.data.id);
+        //   setIsSubmissionIdFetched(true);
+        // }
       }
     } catch (e) {
       console.log("Error while fetching option", e);
