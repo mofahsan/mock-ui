@@ -43,7 +43,14 @@ export function DisplayFlow({
       transactionId,
       getSession
     );
-    setNodes(n);
+    console.log("Nodes", n);
+    console.log("Edges", e);
+
+    const used = e.flatMap((edges) => [edges.source, edges.target]);
+    const filteredNodes =
+      used.length > 0 ? n.filter((node) => used.includes(node.id)) : n;
+    // console.log();
+    setNodes(filteredNodes);
     setEdges(e);
   }, [config, protocolCalls, transactionId]);
   const proOptions = { hideAttribution: true };

@@ -1,7 +1,7 @@
 import React, { useState, useRef } from "react";
 import axios from "axios";
 import { toast } from "react-toastify";
-import { useForm } from "react-hook-form";
+import { set, useForm } from "react-hook-form";
 import { env } from "../env/env";
 import BackIcon from "../assets/png/back.png";
 import Box from "@mui/material/Box";
@@ -9,6 +9,7 @@ import Stepper from "@mui/material/Stepper";
 import Step from "@mui/material/Step";
 import StepLabel from "@mui/material/StepLabel";
 import CircularProgress from "@mui/material/CircularProgress";
+import JsonView from "@uiw/react-json-view";
 import {
   Container,
   HeadingWrapper,
@@ -40,6 +41,8 @@ import VerticalLinearStepper, {
   QontoConnector,
 } from "./verticalProtocolsSteps";
 import { StepContent } from "@mui/material";
+import { GenericModal } from "./d3-visualization/ModalUI";
+import { JourneyDisplay } from "./JourneyUI/JourneyDisplay";
 
 const RequestExecuter = ({ transactionId, handleBack }) => {
   const [protocolCalls, setProtocolCalls] = useState({});
@@ -50,6 +53,8 @@ const RequestExecuter = ({ transactionId, handleBack }) => {
   const [currentConfig, setCurrentConfig] = useState("");
   const [showError, setShowError] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [modalOpen, setModalOpen] = useState(false);
+  const [selectedConfig, setSelectedConfig] = useState(null);
   const requestCount = useRef(0);
   const {
     handleSubmit,
@@ -229,7 +234,16 @@ const RequestExecuter = ({ transactionId, handleBack }) => {
 
   const displayOnCallData = (call) => {
     const renderedResponse = call.businessPayload.map((item) => {
-      return <ResponseField>{JSON.stringify(item)}</ResponseField>;
+      return (
+        <ResponseField>
+          <JsonView
+            value={item}
+            style={{ fontSize: "16px" }}
+            displayDataTypes={false}
+          />
+          {/* {JSON.stringify(item)} */}
+        </ResponseField>
+      );
     });
     return (
       <OnPayloadContainer>
@@ -374,6 +388,17 @@ const RequestExecuter = ({ transactionId, handleBack }) => {
             <CardHeader onClick={() => toggleCollapse(call)}>
               <HeadingWrapper>{call.config}</HeadingWrapper>
               <InLineContainer>
+                {call.type !== "form" && !call.type.startsWith("on_") && (
+                  <ResetContainer
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setModalOpen(true);
+                      setSelectedConfig(call.config);
+                    }}
+                  >
+                    <div>View Flow</div>
+                  </ResetContainer>
+                )}
                 {!call.type.startsWith("on_") && (
                   <ResetContainer
                     onClick={() => replayTranscation(call.config)}
@@ -382,6 +407,7 @@ const RequestExecuter = ({ transactionId, handleBack }) => {
                     <ReplayIcon />
                   </ResetContainer>
                 )}
+
                 <ResetContainer>
                   <IconsContainer rotation={call.isCollapsed ? 270 : 90}>
                     <img
@@ -494,110 +520,66 @@ const RequestExecuter = ({ transactionId, handleBack }) => {
     }
   }
   return (
-    <Wrapper>
-      <TitleContainer>
-        <TitleHeading>
-          <img
-            onClick={handleBack}
-            src={BackIcon}
-            alt="Description"
-            width={15}
-            height={15}
-          />
-          <h2>{session?.summary}</h2>
-        </TitleHeading>
-        <TitleInfo>
-          <div>
-            <p>Transaction ID :</p>
-            <small>{transactionId}</small>
-          </div>
-          <div>
-            <p>Domain :</p>
-            <small>{session?.domain}</small>
-          </div>
-          <div>
-            <p>Versoin :</p>
-            <small>{session?.version}</small>
-          </div>
-          <div>
-            <p>Country :</p>
-            <small>{session?.cityCode}</small>
-          </div>
-          <div>
-            <p>City :</p>
-            <small>{session?.country}</small>
-          </div>
-        </TitleInfo>
-      </TitleContainer>
+    <>
+      <Wrapper>
+        <TitleContainer>
+          <TitleHeading>
+            <img
+              onClick={handleBack}
+              src={BackIcon}
+              alt="Description"
+              width={15}
+              height={15}
+            />
+            <h2>{session?.summary}</h2>
+          </TitleHeading>
+          <TitleInfo>
+            <div>
+              <p>Transaction ID :</p>
+              <small>{transactionId}</small>
+            </div>
+            <div>
+              <p>Domain :</p>
+              <small>{session?.domain}</small>
+            </div>
+            <div>
+              <p>Versoin :</p>
+              <small>{session?.version}</small>
+            </div>
+            <div>
+              <p>Country :</p>
+              <small>{session?.cityCode}</small>
+            </div>
+            <div>
+              <p>City :</p>
+              <small>{session?.country}</small>
+            </div>
+          </TitleInfo>
+        </TitleContainer>
 
-      <div style={{ display: "flex", alignItems: "flex-start" }}>
-        {/* <VerticalLinearStepper protocolCalls={protocolCalls} /> */}
-        <div style={{ width: "100%" }}>
-          <Box>
-            <Stepper
-              orientation="vertical"
-              activeStep={activeStep}
-              connector={<QontoConnector />}
-            >
-              {Object.entries(protocolCalls).flatMap((data, index) => {
-                const [key, call] = data;
-
-                if (call.shouldRender && call.unsolicited?.length) {
-                  return [
-                    call.unsolicited.map((unsCall) =>
-                      renderRequestContainer(unsCall, inputFieldsData)
-                    ),
-                    renderRequestContainer(call, inputFieldsData),
-                  ];
-                }
-
-                if (call.shouldRender) {
-                  return renderRequestContainer(call, inputFieldsData);
-                }
-                return (
-                  <Step key={index}>
-                    <StepLabel>{call.config}</StepLabel>
-                  </Step>
-                );
-              })}
-            </Stepper>
-          </Box>
-          {session?.additionalFlowConfig && (
-            <Box style={{ marginTop: "10px" }}>
-              <SecondaryTitleHeading>
-                <h2>{session.additionalFlowConfig.summary}</h2>
-              </SecondaryTitleHeading>
-
+        <div style={{ display: "flex", alignItems: "flex-start" }}>
+          {/* <VerticalLinearStepper protocolCalls={protocolCalls} /> */}
+          <div style={{ width: "100%" }}>
+            <Box>
               <Stepper
                 orientation="vertical"
-                activeStep={additionalFlowActiveStep}
+                activeStep={activeStep}
                 connector={<QontoConnector />}
               >
-                {Object.entries(
-                  session.additionalFlowConfig.protocolCalls
-                ).flatMap((data, index) => {
+                {Object.entries(protocolCalls).flatMap((data, index) => {
                   const [key, call] = data;
 
                   if (call.shouldRender && call.unsolicited?.length) {
                     return [
                       call.unsolicited.map((unsCall) =>
-                        renderRequestContainer(
-                          unsCall,
-                          session.additionalFlowConfig.input
-                        )
+                        renderRequestContainer(unsCall, inputFieldsData)
                       ),
-                      renderRequestContainer(
-                        call,
-                        session.additionalFlowConfig.input
-                      ),
+                      renderRequestContainer(call, inputFieldsData),
                     ];
                   }
 
                   if (call.shouldRender) {
-                    return renderRequestContainer(
-                      call,
-                      session.additionalFlowConfig.input
-                    );
+                    return renderRequestContainer(call, inputFieldsData);
                   }
                   return (
                     <Step key={index}>
@@ -607,11 +589,67 @@ const RequestExecuter = ({ transactionId, handleBack }) => {
                 })}
               </Stepper>
             </Box>
-          )}
-          {showAddRequestButton && <>Add Request</>}
+            {session?.additionalFlowConfig && (
+              <Box style={{ marginTop: "10px" }}>
+                <SecondaryTitleHeading>
+                  <h2>{session.additionalFlowConfig.summary}</h2>
+                </SecondaryTitleHeading>
+
+                <Stepper
+                  orientation="vertical"
+                  activeStep={additionalFlowActiveStep}
+                  connector={<QontoConnector />}
+                >
+                  {Object.entries(
+                    session.additionalFlowConfig.protocolCalls
+                  ).flatMap((data, index) => {
+                    const [key, call] = data;
+
+                    if (call.shouldRender && call.unsolicited?.length) {
+                      return [
+                        call.unsolicited.map((unsCall) =>
+                          renderRequestContainer(
+                            unsCall,
+                            session.additionalFlowConfig.input
+                          )
+                        ),
+                        renderRequestContainer(
+                          call,
+                          session.additionalFlowConfig.input
+                        ),
+                      ];
+                    }
+
+                    if (call.shouldRender) {
+                      return renderRequestContainer(
+                        call,
+                        session.additionalFlowConfig.input
+                      );
+                    }
+                    return (
+                      <Step key={index}>
+                        <StepLabel>{call.config}</StepLabel>
+                      </Step>
+                    );
+                  })}
+                </Stepper>
+              </Box>
+            )}
+            {showAddRequestButton && <>Add Request</>}
+          </div>
         </div>
-      </div>
-    </Wrapper>
+      </Wrapper>
+      <GenericModal
+        open={modalOpen}
+        setOpen={setModalOpen}
+        title={selectedConfig}
+      >
+        <JourneyDisplay
+          selectedID={transactionId}
+          defaultOpen={selectedConfig}
+        />
+      </GenericModal>
+    </>
   );
 };
 

@@ -58,3 +58,47 @@ export default function TransitionsModal({ open, setOpen, data }) {
     </React.Fragment>
   );
 }
+
+export const GenericModal = ({ open, setOpen, title, children }) => {
+  const scroll = "paper";
+  const handleClose = () => {
+    setOpen(false);
+  };
+  const descriptionElementRef = React.useRef(null);
+  React.useEffect(() => {
+    if (open) {
+      const { current: descriptionElement } = descriptionElementRef;
+      if (descriptionElement !== null) {
+        descriptionElement.focus();
+      }
+    }
+  }, [open]);
+
+  return (
+    <React.Fragment>
+      <Dialog
+        open={open}
+        onClose={handleClose}
+        scroll={scroll}
+        aria-labelledby="scroll-dialog-title"
+        aria-describedby="scroll-dialog-description"
+        fullWidth={true}
+        maxWidth="md"
+      >
+        <DialogTitle id="scroll-dialog-title">{title}</DialogTitle>
+        <DialogContent dividers={scroll === "paper"}>
+          <DialogContentText
+            id="scroll-dialog-description"
+            ref={descriptionElementRef}
+            tabIndex={-1}
+          >
+            {children}
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleClose}>Close</Button>
+        </DialogActions>
+      </Dialog>
+    </React.Fragment>
+  );
+};

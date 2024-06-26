@@ -1,4 +1,4 @@
-import styled, { keyframes } from "styled-components";
+import styled, { keyframes, css } from "styled-components";
 
 export const Container = styled.div`
   width: 100%;
@@ -44,6 +44,15 @@ export const SendButton = styled.button`
   &:hover {
     background-color: #45a049; /* Change the background color on hover */
   }
+
+  ${({ disabled }) =>
+    disabled &&
+    css`
+      cursor: not-allowed;
+      &:hover {
+        background-color: initial; /* Maintain the original background color */
+      }
+    `}
 `;
 
 export const Wrapper = styled.div`

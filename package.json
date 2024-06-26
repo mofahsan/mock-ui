@@ -11,6 +11,7 @@
     "@testing-library/react": "^13.4.0",
     "@testing-library/user-event": "^13.5.0",
     "@tisoap/react-flow-smart-edge": "^3.0.0",
+    "@uiw/react-json-view": "^2.0.0-alpha.24",
     "antd": "^5.10.0",
     "axios": "^1.5.1",
     "bootstrap": "^5.3.2",

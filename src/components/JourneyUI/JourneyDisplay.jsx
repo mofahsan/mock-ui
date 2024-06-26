@@ -5,22 +5,25 @@ import Step from "@mui/material/Step";
 import StepLabel from "@mui/material/StepLabel";
 import Typography from "@mui/material/Typography";
 import { styled } from "@mui/material/styles";
-import { StepButton } from "@mui/material";
+import { CircularProgress, StepButton } from "@mui/material";
 import { DisplayFlow } from "./Flow/DisplayFlow";
 import axios from "axios";
 import { toast } from "react-toastify";
 import { env } from "../../env/env";
 import { useState } from "react";
+import { set } from "react-hook-form";
 
-export function JourneyDisplay({ selectedID }) {
+export function JourneyDisplay({ selectedID, defaultOpen = null }) {
   const SIDE_NAV_WIDTH = 0;
   const [protocolCalls, setProtocolCalls] = useState({});
-  const [flowConfig, setFlowConfig] = useState(null);
+  const [flowConfig, setFlowConfig] = useState(defaultOpen);
+  const [loading, setLoading] = useState(true);
   React.useEffect(() => {
     getSession();
   }, [selectedID]);
 
   const getSession = async () => {
+    setLoading(true);
     try {
       const header = {};
       header.headers = {
@@ -32,9 +35,11 @@ export function JourneyDisplay({ selectedID }) {
         header
       );
       setProtocolCalls(res.data.protocolCalls);
+      setLoading(false);
     } catch (e) {
       console.log("Error while fetching session data", e);
       toast.error(JSON.stringify(e?.response));
+      setLoading(false);
     }
   };
   const LayoutRoot = styled("div")(({ theme }) => ({
@@ -55,6 +60,13 @@ export function JourneyDisplay({ selectedID }) {
     alignItems: "center",
   });
 
+  if (loading)
+    return (
+      <>
+        <CircularProgress />
+      </>
+    );
+  console.log("HELLO", protocolCalls);
   return (
     <LayoutRoot>
       <LayoutContainer>

@@ -78,28 +78,6 @@ function CreateNodes(protocolCalls, config, transactionId, getSession) {
     });
   }
 
-  // if (on_data.executed) {
-  //   if (data.type === "search") {
-  //     const pay = protocolCalls[Object.keys(protocolCalls)[1]].becknPayload;
-  //     pay.forEach((p, i) => {
-  //       AddSellerNode(nodes, sellerIds, p.context.bpp_id, i);
-  //     });
-  //   } else {
-  //     const bpp_id = on_data.becknPayload[0].context.bpp_id;
-  //     AddSellerNode(nodes, sellerIds, bpp_id);
-  //   }
-  // } else {
-  //   if ("becknResponse" in data) {
-  //     console.log(data);
-  //     if (data.type !== "search") {
-  //       const bpp_id =
-  //         protocolCalls[data.preRequest].becknPayload[0]?.context.bpp_id ||
-  //         "id";
-  //       AddSellerNode(nodes, sellerIds, bpp_id);
-  //     }
-  //   }
-  // }
-
   return [nodes, buyerId, sellerIds, gateWayId];
 }
 
