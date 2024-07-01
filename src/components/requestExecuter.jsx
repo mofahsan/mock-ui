@@ -47,7 +47,7 @@ import { JourneyDisplay } from "./JourneyUI/JourneyDisplay";
 const RequestExecuter = ({ transactionId, handleBack }) => {
   const [protocolCalls, setProtocolCalls] = useState({});
   const [inputFieldsData, setInputFieldsData] = useState({});
-  const [session, setSession] = useState(null);
+  const [session, setSession] = useState({});
   const [additionalFlows, setAdditionalFlows] = useState(null);
   const [showAddRequestButton, setShowAddRequestButton] = useState(false);
   const [currentConfig, setCurrentConfig] = useState("");
@@ -56,6 +56,7 @@ const RequestExecuter = ({ transactionId, handleBack }) => {
   const [modalOpen, setModalOpen] = useState(false);
   const [selectedConfig, setSelectedConfig] = useState(null);
   const requestCount = useRef(0);
+  const tempDefaultValue = useRef({});
   const {
     handleSubmit,
     control,
@@ -95,7 +96,19 @@ const RequestExecuter = ({ transactionId, handleBack }) => {
   useEffect(() => {
     let firstPayload = false;
     let stopMapper = false;
-    Object.entries(protocolCalls).map((data) => {
+
+    console.log("additionalFlowActive", session?.additionalFlowActive);
+
+    const currentProtocolCalls =
+      session?.additionalFlowActive && session?.additionalFlowConfig
+        ? session.additionalFlowConfig.protocolCalls
+        : session.protocolCalls;
+
+    if (!currentProtocolCalls) {
+      return;
+    }
+
+    Object.entries(currentProtocolCalls).map((data) => {
       const [, call] = data;
       if (call.shouldRender === true && call.executed === false) {
         setCurrentConfig(call.config);
@@ -135,7 +148,8 @@ const RequestExecuter = ({ transactionId, handleBack }) => {
       if (
         item.defaultValue ||
         call?.businessPayload?.[item.key] ||
-        getValues(item.key)
+        getValues(item.key) ||
+        tempDefaultValue.current[item.key]
       ) {
         continue;
       }
@@ -143,6 +157,7 @@ const RequestExecuter = ({ transactionId, handleBack }) => {
     }
     return true;
   };
+
   useEffect(() => {
     const allFieldsFilled = checkFormFields(currentConfig);
     // console.log("allFieldsFilled", allFieldsFilled);
@@ -154,6 +169,10 @@ const RequestExecuter = ({ transactionId, handleBack }) => {
       if (currentConfig) toggleCollapse(protocolCalls[currentConfig]);
     }
   }, [currentConfig, setValue]);
+
+  const storeDefaultValue = (key, value) => {
+    tempDefaultValue.current = { ...tempDefaultValue.current, [key]: value };
+  };
 
   const handleSend = async (call) => {
     await sendRequest(watch(), call);
@@ -269,11 +288,13 @@ const RequestExecuter = ({ transactionId, handleBack }) => {
     setIsLoading(true);
     setShowAddRequestButton(false);
 
+    e = { ...e, ...tempDefaultValue.current };
+
     // console.log("e", e);
     // console.log("call", call);
 
     if (call.type === "form") {
-      const formUrl = getValues(call.formUrlKey);
+      const formUrl = e[call.formUrlKey];
       window.open(formUrl, "_blank", "noreferrer");
     }
 
@@ -452,6 +473,7 @@ const RequestExecuter = ({ transactionId, handleBack }) => {
                       errors={errors}
                       watch={watch}
                       setValue={setValue}
+                      storeDefaultValue={storeDefaultValue}
                     />
                   ))}
                 </FormContainer>
@@ -488,6 +510,7 @@ const RequestExecuter = ({ transactionId, handleBack }) => {
       </Step>
     );
   };
+
   let activeStep = 0;
   const steps = Object.entries(protocolCalls).flatMap((data) => {
     const [key, call] = data;

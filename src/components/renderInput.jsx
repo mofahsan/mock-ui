@@ -13,19 +13,25 @@ import { useEffect, useRef } from "react";
 import { useState } from "react";
 
 const exeptions = ["startStop", "endStop"];
-const RenderInput = ({ data, control, errors, watch, setValue }) => {
+const RenderInput = ({
+  data,
+  control,
+  errors,
+  watch,
+  setValue,
+  storeDefaultValue,
+}) => {
   const [selectOptions, setSelectOptions] = useState();
   const [url, setUrl] = useState("");
   const [formData, setFormData] = useState(watch());
   const [selectDefaultValue, setSelectDefaultValue] = useState("");
   const [isFetched, setIsFetched] = useState(false);
   const [isSubmissionIdFetched, setIsSubmissionIdFetched] = useState(false);
-  // const fetched = useRef([]);
+  const isSetValueRefresh = useRef(false);
 
   // there is only one form in the ui
   useEffect(() => {
     getOptions();
-    getSubmissionId();
   }, [data, formData]);
 
   useEffect(() => {
@@ -44,21 +50,11 @@ const RenderInput = ({ data, control, errors, watch, setValue }) => {
     }
   };
 
-  const getSubmissionId = () => {
-    if (data.config !== data.currentConfig) {
-      return;
-    }
-
-    // if (data.key === "kycSubmissionId") {
-    //   setValue(data.key);
-    // }
-    // console.log("data", data);
-  };
-
   const getOptions = async () => {
-    if (isFetched) {
-      return;
-    }
+    // if (isSetValueRefresh.current) {
+    //   isSetValueRefresh.current = false;
+    //   return;
+    // }
 
     if (data.type !== "select" && data.type !== "form") {
       return;
@@ -67,27 +63,14 @@ const RenderInput = ({ data, control, errors, watch, setValue }) => {
     if (data.config !== data.currentConfig) {
       return;
     }
-    // if (fetched.current.includes(data.key) && !exeptions.includes(data.key)) {
-    //   return;
-    // }
-    // fetched.current.push(data.key);
-    let replaceFieldValue = "";
-
-    if (data.extractionPathReplaceWith) {
-      replaceFieldValue = eval(data.extractionPathReplaceWith);
-
-      if (replaceFieldValue === "") return;
-    }
-
-    let path = data.extractionPath;
-
-    if (data.extractionPathReplace) {
-      path = path.replace(data.extractionPathReplace, replaceFieldValue);
-    }
-
-    if (!path) return;
 
     try {
+      let path = data.extractionPath;
+
+      path = eval(path);
+
+      if (!path) return;
+
       const header = {};
       header.headers = {
         ...header.headers,
@@ -111,25 +94,15 @@ const RenderInput = ({ data, control, errors, watch, setValue }) => {
       if (data.type === "select") {
         if (filteredOptions.length === 1) {
           setSelectDefaultValue(filteredOptions[0].key);
-          setValue(data.key, filteredOptions[0].key);
+          storeDefaultValue(data.key, filteredOptions[0].key);
+          // setValue(data.key, filteredOptions[0].key);
           // default value for select
         }
         setSelectOptions(filteredOptions);
       } else if (data.type === "form") {
         setUrl(filteredOptions?.[0]?.value);
-        setValue(data.key, filteredOptions?.[0]?.value);
-
-        // const submissionId = await axios.post(
-        //   `${env.sandBox}/submissionId`,
-        //   JSON.stringify({
-        //     url: filteredOptions?.[0]?.value,
-        //   }),
-        //   header
-        // );
-        // if (!isSubmissionIdFetched) {
-        //   setValue(data.submissionIdFieldKey, submissionId.data.id);
-        //   setIsSubmissionIdFetched(true);
-        // }
+        // need to do something about this
+        // setValue(data.key, filteredOptions?.[0]?.value);
       }
     } catch (e) {
       console.log("Error while fetching option", e);
@@ -137,14 +110,7 @@ const RenderInput = ({ data, control, errors, watch, setValue }) => {
     }
   };
 
-  // console.log("data", data.key);
-  // console.log("sleectOPts", selectOptions);
-  // console.log("formaDat", formData);
-
   if (data.type === "text") {
-    if (!data.defaultValue) {
-      // setFilledInputs(false);
-    }
     return (
       <FormFieldWrapper>
         <LabelContainer isRequired={data.required}>
@@ -191,20 +157,43 @@ const RenderInput = ({ data, control, errors, watch, setValue }) => {
         <Controller
           name={data.key}
           control={control}
-          defaultValue={data?.defaultValue}
+          defaultValue={
+            eval(data?.defaultValueExpression) || data?.defaultValue
+          }
           rules={{ required: data.required && data.errorText }}
           render={({ field }) => (
             <>
-              <select {...field}>
-                <option selected="selected" disabled="disabled">
-                  select value
-                </option>
+              <select
+                {...field}
+                onChange={(e) => {
+                  const a = e.target.options[e.target.selectedIndex];
+                  const properties = JSON.parse(a.dataset.properties);
+                  delete properties.key;
+                  delete properties.value;
+
+                  Object.entries(properties)?.map((item) => {
+                    const [key, value] = item;
+                    setValue(key, value);
+                  });
+
+                  field.onChange(e);
+                }}
+              >
+                <option disabled="disabled">select value</option>
                 {(
                   selectOptions ||
                   data?.providedOptions ||
                   data?.defaultOptions
-                )?.map((item) => {
-                  return <option value={item.value}>{item.key}</option>;
+                )?.map((item, index) => {
+                  return (
+                    <option
+                      selected={index === 0}
+                      data-properties={JSON.stringify(item)}
+                      value={item.value}
+                    >
+                      {item.key}
+                    </option>
+                  );
                 })}
               </select>
               {errors[data.key] && <p>{errors[data.key].message}</p>}
