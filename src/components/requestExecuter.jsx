@@ -126,7 +126,7 @@ const RequestExecuter = ({ transactionId, handleBack }) => {
         getSession();
         requestCount.current += 1;
       }, 3000);
-      if (requestCount.current > 2) {
+      if (requestCount.current > 2 && !showError) {
         clearTimeout(session);
         toast.error("Response timeout");
         sessionTimeout(call.config);
@@ -174,8 +174,8 @@ const RequestExecuter = ({ transactionId, handleBack }) => {
     tempDefaultValue.current = { ...tempDefaultValue.current, [key]: value };
   };
 
-  const handleSend = async (call) => {
-    await sendRequest(watch(), call);
+  const handleSend = async (call, input) => {
+    await sendRequest(watch(), call, input);
   };
 
   const sessionTimeout = async (config) => {
@@ -284,14 +284,42 @@ const RequestExecuter = ({ transactionId, handleBack }) => {
     );
   };
 
-  const sendRequest = async (e, call) => {
+  const sendRequest = async (e, call, input) => {
     setIsLoading(true);
     setShowAddRequestButton(false);
 
     e = { ...e, ...tempDefaultValue.current };
 
-    // console.log("e", e);
-    // console.log("call", call);
+    console.log("e", e);
+    console.log("call", call);
+    console.log("input", input);
+
+    // let parseIterativeField = [];
+    // let counter = call.itreativeFieldCount;
+
+    // if (true) {
+    //   while (counter > 0) {
+    //     const temp = {};
+    //     input.map((inputData) => {
+    //       temp[inputData.key] = e[`${inputData.key}_${counter - 1}`];
+    //     });
+    //     parseIterativeField.push(temp);
+    //     counter -= 1;
+    //   }
+    // }
+
+    // console.log("parseIterativeField", parseIterativeField);
+
+    // Signle form data in data object in protocol server
+
+    let filteredFormData = {};
+
+    input?.map((item) => {
+      filteredFormData[item.key] = e[item.key];
+    });
+
+    console.log("filteredFormData", filteredFormData);
+    e = filteredFormData;
 
     if (call.type === "form") {
       const formUrl = e[call.formUrlKey];
@@ -400,6 +428,72 @@ const RequestExecuter = ({ transactionId, handleBack }) => {
     );
   };
 
+  const renderFormFields = (inputField, call) => {
+    let counter = call.itreativeFieldCount;
+
+    let renderedList = [];
+
+    if (!counter) {
+      return inputField[call.config].map((item) => (
+        <RenderInput
+          data={{
+            ...{ ...item },
+            config: call.config,
+            currentConfig: currentConfig,
+            defaultValue:
+              call?.businessPayload?.[item.key] || item.defaultValue,
+            businessPayload:
+              protocolCalls[call.config].unsolicited?.businessPayload ||
+              protocolCalls[call.preRequest]?.businessPayload,
+            session: session,
+          }}
+          control={control}
+          errors={errors}
+          watch={watch}
+          setValue={setValue}
+          storeDefaultValue={storeDefaultValue}
+        />
+      ));
+    }
+
+    while (counter > 0) {
+      renderedList.push(
+        inputField[call.config].map((item) => (
+          <RenderInput
+            data={{
+              ...{ ...item, key: `${item.key}_${counter - 1}` },
+              config: call.config,
+              currentConfig: currentConfig,
+              defaultValue:
+                call?.businessPayload?.[item.key] || item.defaultValue,
+              businessPayload:
+                protocolCalls[call.config].unsolicited?.businessPayload ||
+                protocolCalls[call.preRequest]?.businessPayload,
+              session: session,
+            }}
+            control={control}
+            errors={errors}
+            watch={watch}
+            setValue={setValue}
+            storeDefaultValue={storeDefaultValue}
+          />
+        ))
+      );
+
+      counter -= 1;
+    }
+
+    return renderedList;
+  };
+
+  const updatedIterativeFieldCount = (call, count) => {
+    setProtocolCalls((prevData) => {
+      prevData[call.config].itreativeFieldCount = count;
+
+      return JSON.parse(JSON.stringify(prevData));
+    });
+  };
+
   const renderRequestContainer = (call, inputField) => {
     return (
       <Step key={call.config} connector={<QontoConnector />} active={true}>
@@ -409,6 +503,20 @@ const RequestExecuter = ({ transactionId, handleBack }) => {
             <CardHeader onClick={() => toggleCollapse(call)}>
               <HeadingWrapper>{call.config}</HeadingWrapper>
               <InLineContainer>
+                {!call.type.startsWith("on_") && (
+                  <ResetContainer
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      console.log("wopting");
+                      updatedIterativeFieldCount(
+                        call,
+                        (call.itreativeFieldCount || 1) + 1
+                      );
+                    }}
+                  >
+                    <div>Add</div>
+                  </ResetContainer>
+                )}
                 {call.type !== "form" && !call.type.startsWith("on_") && (
                   <ResetContainer
                     onClick={(e) => {
@@ -428,7 +536,6 @@ const RequestExecuter = ({ transactionId, handleBack }) => {
                     <ReplayIcon />
                   </ResetContainer>
                 )}
-
                 <ResetContainer>
                   <IconsContainer rotation={call.isCollapsed ? 270 : 90}>
                     <img
@@ -451,10 +558,11 @@ const RequestExecuter = ({ transactionId, handleBack }) => {
               ) : (
                 <FormContainer
                   onSubmit={handleSubmit((data) => {
-                    sendRequest(data, call);
+                    sendRequest(data, call, inputField[call.config]);
                   })}
                 >
-                  {inputField[call.config].map((item) => (
+                  {renderFormFields(inputField, call)}
+                  {/* {inputField[call.config].map((item) => (
                     <RenderInput
                       data={{
                         ...item,
@@ -475,7 +583,7 @@ const RequestExecuter = ({ transactionId, handleBack }) => {
                       setValue={setValue}
                       storeDefaultValue={storeDefaultValue}
                     />
-                  ))}
+                  ))} */}
                 </FormContainer>
               )}
             </CardBody>
@@ -499,7 +607,7 @@ const RequestExecuter = ({ transactionId, handleBack }) => {
                     !checkFormFields(currentConfig)
                   }
                   type="submit"
-                  onClick={() => handleSend(call)}
+                  onClick={() => handleSend(call, inputField[call.config])}
                 >
                   {call.type === "form" ? "Continue" : "Send"}
                 </SendButton>
@@ -542,6 +650,7 @@ const RequestExecuter = ({ transactionId, handleBack }) => {
       }
     }
   }
+
   return (
     <>
       <Wrapper>

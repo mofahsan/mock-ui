@@ -27,6 +27,8 @@ const RenderInput = ({
   const [selectDefaultValue, setSelectDefaultValue] = useState("");
   const [isFetched, setIsFetched] = useState(false);
   const [isSubmissionIdFetched, setIsSubmissionIdFetched] = useState(false);
+  const [areAddFieldStoredInSelect, setAreAddFieldStoredInSelect] =
+    useState(false);
   const isSetValueRefresh = useRef(false);
 
   // there is only one form in the ui
@@ -166,6 +168,9 @@ const RenderInput = ({
               <select
                 {...field}
                 onChange={(e) => {
+                  setAreAddFieldStoredInSelect(true);
+                  // console.log("inside onChange>>>',");
+                  // console.log("");
                   const a = e.target.options[e.target.selectedIndex];
                   const properties = JSON.parse(a.dataset.properties);
                   delete properties.key;
@@ -185,6 +190,9 @@ const RenderInput = ({
                   data?.providedOptions ||
                   data?.defaultOptions
                 )?.map((item, index) => {
+                  if (index === 0 && !areAddFieldStoredInSelect) {
+                    // console.log("wkring>>>>> afaianfa aifnaif", data.key);
+                  }
                   return (
                     <option
                       selected={index === 0}
