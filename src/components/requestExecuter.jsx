@@ -503,7 +503,7 @@ const RequestExecuter = ({ transactionId, handleBack }) => {
             <CardHeader onClick={() => toggleCollapse(call)}>
               <HeadingWrapper>{call.config}</HeadingWrapper>
               <InLineContainer>
-                {!call.type.startsWith("on_") && (
+                {/* {!call.type.startsWith("on_") && (
                   <ResetContainer
                     onClick={(e) => {
                       e.stopPropagation();
@@ -516,7 +516,7 @@ const RequestExecuter = ({ transactionId, handleBack }) => {
                   >
                     <div>Add</div>
                   </ResetContainer>
-                )}
+                )} */}
                 {call.type !== "form" && !call.type.startsWith("on_") && (
                   <ResetContainer
                     onClick={(e) => {
