@@ -27,7 +27,7 @@ import { useEffect } from "react";
 import MakeSlopeChart from "../d3-visualization/MakeMarkovChart";
 import ReplayIcon from "@mui/icons-material/Replay";
 import Collapse from "@mui/material/Collapse";
-
+import { Switch } from 'antd';
 const RequestExecuter = ({ transactionId, handleBack }) => {
   const [protocolCalls, setProtocolCalls] = useState({});
   const [inputFieldsData, setInputFieldsData] = useState({});
@@ -38,14 +38,17 @@ const RequestExecuter = ({ transactionId, handleBack }) => {
   const [showError, setShowError] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const requestCount = useRef(0);
+  const [auto,setAuto]=useState(false)
+  const [call,setCall]= useState({})
   const {
     handleSubmit,
     control,
     formState: { errors },
+    trigger,
     watch,
+    getValues,
   } = useForm();
 
-  console.log(inputFieldsData,"inputFieldsData")
   useEffect(() => {
     getSession();
   }, [transactionId]);
@@ -282,7 +285,7 @@ const RequestExecuter = ({ transactionId, handleBack }) => {
         <CardHeader>
           <HeadingWrapper>{call.config}</HeadingWrapper>
           <IconsContainer rotation={call.isCollapsed ? 270 : 90}>
-            {call.type.startsWith("on_") && (
+            {call?.type?.startsWith("on_") && (
               <ResetContainer onClick={() => replayTranscation(call.config)}>
                 <div>Reset</div>
                 <ReplayIcon />
@@ -353,6 +356,34 @@ const RequestExecuter = ({ transactionId, handleBack }) => {
     );
   };
 
+  const handleToggle=()=>{
+    setAuto((prevState)=> !prevState)
+  }
+
+
+  const autoSubmitForm = (call) => {
+    const data = getValues(); // Prepare data similar to what you do in sendRequest
+    // Object.entries(getValues()).forEach(([key, value]) => {
+    //   if (key.includes("Tag")) {
+    //     const parsedData = JSON.parse(value);
+    //     data[key] = parsedData;
+    //   } else {
+    //     data[key] = value;
+    //   }
+    // });
+    sendRequest(data, call);
+  };
+
+  // useEffect to automatically submit the form when auto is true
+  useEffect(() => {
+    if (auto && currentConfig) {
+      const call = protocolCalls[currentConfig];
+      if (call.type.startsWith("on_") && !call.executed) {
+        autoSubmitForm(call);
+      }
+    }
+  }, [auto, currentConfig, protocolCalls]);
+
   return (
     <Wrapper>
       <TitleContainer>
@@ -387,15 +418,18 @@ const RequestExecuter = ({ transactionId, handleBack }) => {
             <small>City :</small>
             <p>{session?.country}</p>
           </div>
+          <div>
+          <Switch onChange={handleToggle} />
+          </div>
         </TitleInfo>
       </TitleContainer>
 
       {Object.entries(protocolCalls).flatMap((data) => {
-        console.log(data,"is the data")
+        //console.log(data,"is the data")
         const [key, call] = data;
-
+        //console.log(call.shouldRender)
         if (call.shouldRender && call.unsolicited) {
-          console.log(call,"is the call")
+          //console.log(call,"is the call")
           return [
             renderRequestContainer(call.unsolicited),
             renderRequestContainer(call),
