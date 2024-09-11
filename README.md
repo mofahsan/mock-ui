@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # Introduction
 
 The mock ui is the frontend for the protocol server that provides UI for seller and buyer to execute the transactions.
@@ -60,3 +61,7 @@ npm i
 ```
 npm start
 ```
+=======
+# mock-ui
+Buyer &amp; Seller Mock UI
+>>>>>>> c110f81 (Initial commit)
