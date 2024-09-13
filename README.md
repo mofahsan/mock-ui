@@ -36,18 +36,6 @@ Contributions can be made using the following branching structure:
 
 # How to run - local
 
-- Clone the repo [https://github.com/ONDC-Official/buyer-mock-engine]
-
-```
-git clone https://github.com/ONDC-Official/buyer-mock-engine
-```
-
-- Checkout to master branch
-
-```
-git checkout master
-```
-
 - Install dependencies
 
 ```
