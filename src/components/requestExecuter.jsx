@@ -434,7 +434,7 @@ const RequestExecuter = ({ transactionId, handleBack }) => {
     let renderedList = [];
 
     if (!counter) {
-      return inputField[call.config].map((item) => (
+      return inputField[call.config]?.map((item) => (
         <RenderInput
           data={{
             ...{ ...item },
