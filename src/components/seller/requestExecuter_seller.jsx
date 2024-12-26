@@ -40,6 +40,8 @@ const RequestExecuter = ({ transactionId, handleBack }) => {
   const requestCount = useRef(0);
   const [auto,setAuto]=useState(false)
   const [call,setCall]= useState({})
+  const tempDefaultValue = useRef({});
+
   const {
     handleSubmit,
     control,
@@ -63,11 +65,12 @@ const RequestExecuter = ({ transactionId, handleBack }) => {
       }
       if (firstPayload || stopMapper) return null;
       // if the call isn't on return the function with assigned values
-      if (!call.type.startsWith("on_") && !call.businessPayload) {
+      // if (!call.type.startsWith("on_") && !call.businessPayload) {
+        if (call?.category ==="reciever" && !call.businessPayload) {// if not on
         requestCount.current = 0;
         stopMapper = false;
       }
-      if (!call.type.startsWith("on_") || call.businessPayload) {
+      if (call?.category ==="reciever" || call.businessPayload) { // if not on
         return null;
       }
       // first payload true if isn't on
@@ -175,6 +178,10 @@ const RequestExecuter = ({ transactionId, handleBack }) => {
     );
   };
 
+  const storeDefaultValue = (key, value) => {
+    tempDefaultValue.current = { ...tempDefaultValue.current, [key]: value };
+  };
+
   const sendRequest = async (e, call) => {
 
     if(call.seller_unsolicited){
@@ -182,6 +189,8 @@ const RequestExecuter = ({ transactionId, handleBack }) => {
     }
     setIsLoading(true);
     setShowAddRequestButton(false);
+    e = { ...e, ...tempDefaultValue.current };
+
 
     const data = {};
     Object.entries(e).map((item) => {
@@ -285,7 +294,7 @@ const RequestExecuter = ({ transactionId, handleBack }) => {
         <CardHeader>
           <HeadingWrapper>{call.config}</HeadingWrapper>
           <IconsContainer rotation={call.isCollapsed ? 270 : 90}>
-            {call?.type?.startsWith("on_") && (
+            {call?.category ==="sender" && ( // if on
               <ResetContainer onClick={() => replayTranscation(call.config)}>
                 <div>Reset</div>
                 <ReplayIcon />
@@ -301,7 +310,7 @@ const RequestExecuter = ({ transactionId, handleBack }) => {
           </IconsContainer>
         </CardHeader>
         <CardBody isCollapsed={call.isCollapsed}>
-          {!call.type.startsWith("on_") ? (
+          {call?.category ==="reciever" ? ( // if not on
             <>
               {call.businessPayload ? displayOnCallData(call) : getOnCallData()}
             </>
@@ -326,6 +335,8 @@ const RequestExecuter = ({ transactionId, handleBack }) => {
                   control={control}
                   errors={errors}
                   watch={watch}
+                  storeDefaultValue={storeDefaultValue}
+
                 />
               ))}
               <ButtonContainer>
@@ -378,7 +389,7 @@ const RequestExecuter = ({ transactionId, handleBack }) => {
   useEffect(() => {
     if (auto && currentConfig) {
       const call = protocolCalls[currentConfig];
-      if (call.type.startsWith("on_") && !call.executed) {
+      if (call.category === "sender" && !call.executed) { // if on
         autoSubmitForm(call);
       }
     }
