@@ -3,37 +3,38 @@ import PayloadMapperSeller from "./seller/payloadMapperSeller"
 import PayloadMapper from "./payloadMapper";
 import { NewRequestDiv, NewRequestbutton } from "../styled/section";
 import { JourneySection } from "./JourneyUI/JourneySection";
+import { SELLER_TAB_TITLE,BUYER_TAB_TITLE,DISPLAY_BUYER,DISPLAY_SELLER,DISPLAY_REQUEST } from "../env/constants";
 
 function Section() {
-  const [newRequestContainer, setRequestContainer] = useState("PayloadMapper");
+  const [newRequestContainer, setRequestContainer] = useState(DISPLAY_BUYER ==="true"?"PayloadMapper":"PayloadMapperSeller");
 
   return (
     <div className="container">
       <NewRequestDiv>
-        <NewRequestbutton
+        {DISPLAY_BUYER ==="true" && <NewRequestbutton
           onClick={() => {
             setRequestContainer("PayloadMapper");
           }}
           active={newRequestContainer === "PayloadMapper"}
         >
           Buyer Mock
-        </NewRequestbutton>
-        <NewRequestbutton
+        </NewRequestbutton>}
+        {DISPLAY_REQUEST ==="true" && <NewRequestbutton
           onClick={() => {
             setRequestContainer("JourneySection");
           }}
           active={newRequestContainer === "JourneySection"}
         >
           Request Flow
-        </NewRequestbutton>
-        <NewRequestbutton
+        </NewRequestbutton>}
+        {DISPLAY_SELLER ==="true" && <NewRequestbutton
           onClick={() => {
             setRequestContainer("PayloadMapperSeller");
           }}
           active={newRequestContainer === "PayloadMapperSeller"}
         >
-          Seller Mock
-        </NewRequestbutton>
+          {SELLER_TAB_TITLE}
+        </NewRequestbutton>}
       </NewRequestDiv>
 
       <div
