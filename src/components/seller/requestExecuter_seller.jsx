@@ -224,7 +224,7 @@ const RequestExecuter = ({ transactionId, handleBack }) => {
       setProtocolCalls(res.data.session.protocolCalls);
     } catch (e) {
       console.log("Error while fetching session data", e);
-      toast.error(JSON.stringify(e?.message || "Something went wrong"));
+      toast.error(JSON.stringify(e?.response?.data?.message || "Something went wrong"));
     } finally {
       setIsLoading(false);
     }
