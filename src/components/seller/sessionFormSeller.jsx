@@ -47,6 +47,9 @@ const SessionFormSeller = ({ updateStep }) => {
 
       console.log("response", res.data);
       setTransactions(res.data);
+      if(!res.data.length){
+        toast.warn("No session found, please create session first")
+      }
     } catch (e) {
       console.log("Error while fetching session data", e);
       toast.error(JSON.stringify(e?.response?.data || e?.message));
@@ -56,26 +59,7 @@ const SessionFormSeller = ({ updateStep }) => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     console.log("Form submitted:", formData);
-
-    const transactiomId = uuidv4();
-
-    try {
-      const header = {};
-      header.headers = {
-        ...header.headers,
-        "Content-Type": "application/json",
-      };
-
-      await axios.post(
-        `${env.sellerEngine}/mapper/session`,
-        JSON.stringify({ ...formData, transaction_id: transactiomId }),
-        header
-      );
-      updateStep(2, transactiomId);
-    } catch (e) {
-      console.log("error while sending session request", e);
-      toast.error(JSON.stringify(e?.response?.data || e?.message));
-    }
+    fetchSessionId()
   };
 
   const handleInputChange = (e) => {
