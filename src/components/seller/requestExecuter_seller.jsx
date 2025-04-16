@@ -352,7 +352,7 @@ const RequestExecuter = ({ transactionId, handleBack }) => {
                   Copy Beckn Payload
                 </SendButton> */}
                 <SendButton disabled={call.executed || isLoading} type="submit">
-                  {call.type === "form" ? "Continue" : "Send"}
+                  {call.type === "form" || call.type === "on_selector" ? "Continue" : "Send"}
                 </SendButton>
               </ButtonContainer>
             </FormContainer>
